@@ -1,8 +1,5 @@
 package com.polarbookshop.orderservice.order.web;
 
-import static org.assertj.core.api.Assertions.assertThat;
-import static org.mockito.BDDMockito.given;
-
 import com.polarbookshop.orderservice.order.domain.Order;
 import com.polarbookshop.orderservice.order.domain.OrderService;
 import com.polarbookshop.orderservice.order.domain.OrderStatus;
@@ -13,31 +10,34 @@ import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.test.web.reactive.server.WebTestClient;
 import reactor.core.publisher.Mono;
 
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.BDDMockito.given;
+
 @WebFluxTest(OrderController.class)
 class OrderControllerWebFluxTests {
 
-  @Autowired
-  private WebTestClient webTestClient;
-  @MockBean
-  private OrderService orderService;
+    @Autowired
+    private WebTestClient webTestClient;
+    @MockBean
+    private OrderService orderService;
 
-  @Test
-  void whenBookNotAvailableThenRejectOrder() {
-    var orderRequest = new OrderRequest("1234567890", 3);
-    var rejectedOrder = OrderService.buildRejectedOrder(orderRequest.isbn(),
-        orderRequest.quantity());
-    given(orderService.submitOrder(orderRequest.isbn(), orderRequest.quantity()))
-        .willReturn(Mono.just(rejectedOrder));
+    @Test
+    void whenBookNotAvailableThenRejectOrder() {
+        var orderRequest = new OrderRequest("1234567890", 3);
+        var rejectedOrder = OrderService.buildRejectedOrder(orderRequest.isbn(),
+                orderRequest.quantity());
+        given(orderService.submitOrder(orderRequest.isbn(), orderRequest.quantity()))
+                .willReturn(Mono.just(rejectedOrder));
 
-    webTestClient
-        .post()
-        .uri("/orders")
-        .bodyValue(orderRequest)
-        .exchange()
-        .expectStatus().is2xxSuccessful()
-        .expectBody(Order.class).value(actualOrder -> {
-          assertThat(actualOrder).isNotNull();
-          assertThat(actualOrder.status()).isEqualTo(OrderStatus.REJECTED);
-        });
-  }
+        webTestClient
+                .post()
+                .uri("/orders")
+                .bodyValue(orderRequest)
+                .exchange()
+                .expectStatus().is2xxSuccessful()
+                .expectBody(Order.class).value(actualOrder -> {
+                    assertThat(actualOrder).isNotNull();
+                    assertThat(actualOrder.status()).isEqualTo(OrderStatus.REJECTED);
+                });
+    }
 }
