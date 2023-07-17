@@ -14,6 +14,20 @@ spring:
         max-interval: 2000
         multiplier: 1.1
       fail-fast: false
+    function:
+      definition: dispatchOrder
+    stream:
+      bindings:
+        dispatchOrder-in-0:
+          destination: order-dispatched
+          group: ${spring.application.name}
+        acceptOrder-out-0:
+          destination: order-accepted
+      rabbit:
+        bindings:
+          acceptOrder-out-0:
+            producer:
+              transacted: true
   lifecycle:
     timeout-per-shutdown-phase: 15s
   r2dbc:
@@ -28,6 +42,12 @@ spring:
     user: ${spring.r2dbc.username}
     password: ${spring.r2dbc.password}
     url: jdbc:postgresql://localhost:5432/polardb_order
+  rabbitmq:
+    username: user
+    password: password
+    host: localhost
+    port: 5672
+    connection-timeout: 5s
 server:
   port: 9002
   shutdown: graceful
