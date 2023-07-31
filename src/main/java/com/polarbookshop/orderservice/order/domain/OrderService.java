@@ -33,27 +33,29 @@ public class OrderService {
 
     private static Order buildDispatchedOrder(Order existingOrder) {
         return new Order(existingOrder.id(),
-                existingOrder.bookIsbn(),
-                existingOrder.bookName(),
-                existingOrder.bookPrice(),
-                existingOrder.quantity(),
-                OrderStatus.DISPATCHED,
-                existingOrder.createdDate(),
-                existingOrder.lastModifiedDate(),
-                existingOrder.version());
+            existingOrder.bookIsbn(),
+            existingOrder.bookName(),
+            existingOrder.bookPrice(),
+            existingOrder.quantity(),
+            OrderStatus.DISPATCHED,
+            existingOrder.createdDate(),
+            existingOrder.lastModifiedDate(),
+            existingOrder.createdBy(),
+            existingOrder.lastModifiedBy(),
+            existingOrder.version());
     }
 
-    public Flux<Order> getAllOrders() {
-        return orderRepository.findAll();
+    public Flux<Order> getAllOrders(String username) {
+        return orderRepository.findAllByCreatedBy(username);
     }
 
     @Transactional
     public Mono<Order> submitOrder(String isbn, int quantity) {
         return bookClient.getBookByIsbn(isbn)
-                .map(book -> buildAcceptedOrder(book, quantity))
-                .defaultIfEmpty(buildRejectedOrder(isbn, quantity))
-                .flatMap(orderRepository::save)
-                .doOnNext(this::publishOrderAcceptedEvent);
+            .map(book -> buildAcceptedOrder(book, quantity))
+            .defaultIfEmpty(buildRejectedOrder(isbn, quantity))
+            .flatMap(orderRepository::save)
+            .doOnNext(this::publishOrderAcceptedEvent);
     }
 
     public Flux<Order> consumeOrderDispatchedEvent(Flux<OrderDispatchedMessage> orderDispatchedMessageFlux) {
