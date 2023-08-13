@@ -13,6 +13,10 @@ spec:
     metadata:
       labels:
         app: order-service
+      annotations:
+        prometheus.io/scrape: "true"
+        prometheus.io/path: /actuator/prometheus
+        prometheus.io/port: "9002"
     spec:
       containers:
         - name: order-service
@@ -27,15 +31,39 @@ spec:
           env:
             - name: BPL_JVM_THREAD_COUNT
               value: "50"
-            - name: SPRING_CLOUD_CONFIG_URI
-              value: http://config-service
-            - name: POLAR_CATALOG_SERVICE_URI
-              value: http://catalog-service
-            - name: SPRING_R2DBC_URL
-              value: r2dbc:postgresql://polar-postgres/polardb_order
-            - name: SPRING_FLYWAY_URL
-              value: jdbc:postgresql://polar-postgres/polardb_order
-            - name: SPRING_RABBITMQ_HOST
-              value: polar-rabbitmq
-            - name: SPRING_SECURITY_OAUTH2_RESOURCESERVER_JWT_ISSUER_URI
-              value: http://polar-keycloak/realms/PolarBookshop
+#            - name: SPRING_CLOUD_CONFIG_URI
+#              value: http://config-service
+#            - name: POLAR_CATALOG_SERVICE_URI
+#              value: http://catalog-service
+#            - name: SPRING_R2DBC_URL
+#              value: r2dbc:postgresql://polar-postgres/polardb_order
+#            - name: SPRING_FLYWAY_URL
+#              value: jdbc:postgresql://polar-postgres/polardb_order
+#            - name: SPRING_RABBITMQ_HOST
+#              value: polar-rabbitmq
+#            - name: SPRING_SECURITY_OAUTH2_RESOURCESERVER_JWT_ISSUER_URI
+#              value: http://polar-keycloak/realms/PolarBookshop
+          livenessProbe:
+            httpGet:
+              port: 9002
+              path: /actuator/health/liveness
+              # Increase the initial delay and add failure threshold to allow
+              # the application more time to start and get ready to accept requests.
+              # This is needed for M1 mac until ARM64 support is part of Paketo Buildpacks.
+            #            initialDelaySeconds: 10
+            initialDelaySeconds: 90 # Higher value is only needed for M1 mac
+            periodSeconds: 5
+            failureThreshold: 10 # Only needed for M1 mac
+          readinessProbe:
+            httpGet:
+              port: 9002
+              path: /actuator/health/readiness
+            initialDelaySeconds: 5
+            periodSeconds: 15
+          volumeMounts:
+            - mountPath: /workspace/config
+              name: order-config-volume
+      volumes:
+        - name: order-config-volume
+          configMap:
+            name: order-config

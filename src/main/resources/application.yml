@@ -2,7 +2,8 @@ spring:
   application:
     name: order-service
   config:
-    import: "optional:configserver:"
+    import: ""
+  #    import: "optional:configserver:"
   cloud:
     config:
       uri: http://localhost:8888
@@ -14,6 +15,7 @@ spring:
         max-interval: 2000
         multiplier: 1.1
       fail-fast: false
+      enabled: false  # disable Spring cloud config
     function:
       definition: dispatchOrder
     stream:
@@ -61,3 +63,29 @@ server:
     idle-timeout: 15s
 polar:
   catalog-service-uri: "http://localhost:9001"
+management:
+  endpoints:
+    web:
+      exposure:
+        include: configprops, env, flyway, health, heapdump, info, loggers, mappings, prometheus
+  endpoint:
+    health:
+      probes:
+        enabled: true
+      show-details: always
+      show-components: always
+  metrics:
+    tags:
+      application: ${spring.application.name}
+  info:
+    env:
+      enabled: true
+    java:
+      enabled: true
+    os:
+      enabled: true
+logging:
+  pattern:
+    level: "%5p [${spring.application.name},%X{trace_id},%X{span_id}]"
+info:
+  system: Polar Bookshop
